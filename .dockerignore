@@ -1,0 +1,10 @@
+node_modules
+dist
+npm-debug.log*
+.env
+.env.local
+prisma/migrations/_journal.json
+prisma/dev.db*
+.git
+.vscode
+*.md
