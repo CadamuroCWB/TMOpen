@@ -1,10 +1,13 @@
 import fastify, {
   type FastifyError,
+  type FastifyRequest,
+  type FastifyReply,
 } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
+import rateLimit from '@fastify/rate-limit';
 import scalarApiReference from '@scalar/fastify-api-reference';
 import { validatorCompiler, serializerCompiler, ZodTypeProvider, jsonSchemaTransform } from 'fastify-type-provider-zod';
 import { ZodError, ZodType } from 'zod';
@@ -188,9 +191,24 @@ export async function createApp() {
     reply.status(500).send(errorApiResponse('Erro interno do servidor'));
   });
 
-  await appTyped.register(cors);
+  const corsOrigins = env.CORS_ORIGINS;
+  if (corsOrigins === '*') {
+    await appTyped.register(cors, { origin: true });
+  } else {
+    const origins = corsOrigins.split(',').map((s) => s.trim());
+    await appTyped.register(cors, { origin: origins, credentials: true });
+  }
   await appTyped.register(helmet);
   await appTyped.register(sensible);
+
+  await appTyped.register(rateLimit, {
+    global: true,
+    timeWindow: 60000,
+    max: 60,
+    onExceeded: (request: FastifyRequest) => {
+      request.log.warn({ ip: request.ip }, 'Rate limit atingido');
+    },
+  });
 
   app.addSchema({
     $id: 'https://tmopen.local/PaginationMeta.json',
@@ -222,6 +240,27 @@ export async function createApp() {
     },
   });
 
+  app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+    const url = request.url;
+    const isApiV1 = url.startsWith('/api/v1');
+    const isExempt =
+      url === '/api/v1' ||
+      url === '/healthz' ||
+      url.startsWith('/docs') ||
+      url.startsWith('/docs/json');
+
+    if (isApiV1 && !isExempt) {
+      const apiKeyHeader = request.headers['x-tmopen-api-key'];
+      const apiKeys = env.TMOPEN_API_KEYS.split(',').map((s) => s.trim());
+
+      if (!apiKeyHeader || !apiKeys.includes(apiKeyHeader as string)) {
+        reply
+          .status(401)
+          .send(errorApiResponse('Chave de API inválida ou ausente', null, 'API_KEY_REQUIRED'));
+      }
+    }
+  });
+
   await appTyped.register(swagger, {
     stripBasePath: false,
     transform: safeJsonSchemaTransform,
@@ -250,8 +289,18 @@ export async function createApp() {
           description: 'Estabelecimentos / CNPJ completo',
         },
         { name: 'Sócios', description: 'Quadro societário' },
+        { name: 'Prospecção', description: 'Busca avançada de leads empresariais' },
       ],
-      components: { securitySchemes: {} },
+      components: {
+        securitySchemes: {
+          ApiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'X-TMOpen-Api-Key',
+          },
+        },
+      },
+      security: [{ ApiKeyAuth: [] }],
     },
   });
 
@@ -264,7 +313,25 @@ export async function createApp() {
   });
 
   appTyped.get('/docs/json', async (_request, reply) => {
-    reply.send(app.swagger());
+    const swaggerDoc = app.swagger() as any;
+    if (swaggerDoc && typeof swaggerDoc === 'object') {
+      if (!swaggerDoc.components) {
+        swaggerDoc.components = {};
+      }
+      if (!swaggerDoc.components.securitySchemes) {
+        swaggerDoc.components.securitySchemes = {
+          ApiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'X-TMOpen-Api-Key',
+          },
+        };
+      }
+      if (!swaggerDoc.security) {
+        swaggerDoc.security = [{ ApiKeyAuth: [] }];
+      }
+    }
+    reply.send(swaggerDoc);
   });
 
   await appTyped.register(modulesPlugin);

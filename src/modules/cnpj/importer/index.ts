@@ -149,4 +149,5 @@ function sanitize<T>(o: T): T {
 }
 
 export { ALL_TABLES };
+export { dropIndexes, recreateIndexes, truncateAllTables } from './db.js';
 export * from './types.js';

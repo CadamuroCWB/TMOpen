@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { successApiResponse, SuccessApiResponseSchema } from '../common/response.js';
 import { NotFoundError } from '../common/errors.js';
 import cnpjModuleRoutes from './cnpj/routes/index.js';
+import prospectRoutes from './prospect/routes/prospect.routes.js';
 
 const modulesPlugin: FastifyPluginAsync = async (fastify) => {
   const appTyped = fastify.withTypeProvider<any>();
@@ -26,11 +27,14 @@ const modulesPlugin: FastifyPluginAsync = async (fastify) => {
         '/estabelecimentos',
         '/estabelecimentos/{cnpj}',
         '/socios',
+        '/prospect/estabelecimentos',
+        '/prospect/empresas',
       ] as string[],
     });
   });
 
   await appTyped.register(cnpjModuleRoutes, { prefix: '/api/v1' });
+  await appTyped.register(prospectRoutes, { prefix: '/api/v1' });
 
   appTyped.get('/api/v1/*', async () => {
     throw new NotFoundError('Endpoint não encontrado');

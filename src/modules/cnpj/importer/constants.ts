@@ -26,16 +26,44 @@ export const TRUNCATE_ORDER: TableName[] = [
 ];
 
 export const FILE_KIND_SUFFIXES: Record<FileKind, RegExp[]> = {
-  empresas: [/emprecsv$/i],
-  estabelecimentos: [/estabele$/i],
-  socios: [/sociocsv$/i],
-  dados_simples: [/simples\.csv$/i],
-  cnaes: [/cnaecsv$/i],
-  motivos: [/moticsv$/i],
-  municipios: [/municcsv$/i],
-  naturezas_juridicas: [/natjucsv$/i],
-  paises: [/paiscsv$/i],
-  qualificacoes_socios: [/qualscsv$/i],
+  empresas: [
+    /emprecsv$/i,
+    /\.empre(\.d\d+)?\.csv$/i,
+    /\.empresacsv$/i,
+  ],
+  estabelecimentos: [
+    /estabele$/i,
+    /estabelecsv$/i,
+    /estabeleccsv$/i,
+    /\.estabele(\.d\d+)?\.csv$/i,
+    /\.estabelec(\.d\d+)?\.csv$/i,
+    /\.estabelecimento(\.d\d+)?\.csv$/i,
+  ],
+  socios: [
+    /sociocsv$/i,
+    /\.socio(\.d\d+)?\.csv$/i,
+    /\.socios(\.d\d+)?\.csv$/i,
+  ],
+  dados_simples: [
+    /simplescsv$/i,
+    /\.simples(\.d\d+)?\.csv$/i,
+    /simples\.csv$/i,
+    /\.simples\.csv$/i,
+  ],
+  cnaes: [/cnaecsv$/i, /\.cnae(\.d\d+)?\.csv$/i, /\.cnaes(\.d\d+)?\.csv$/i],
+  motivos: [/moticsv$/i, /\.moti(\.d\d+)?\.csv$/i, /\.motivos(\.d\d+)?\.csv$/i],
+  municipios: [/municcsv$/i, /\.munic(\.d\d+)?\.csv$/i, /\.municipios(\.d\d+)?\.csv$/i],
+  naturezas_juridicas: [
+    /natjucsv$/i,
+    /\.natju(\.d\d+)?\.csv$/i,
+    /\.naturezas[_-]?juridicas?(\.d\d+)?\.csv$/i,
+  ],
+  paises: [/paiscsv$/i, /\.pais(\.d\d+)?\.csv$/i, /\.paises(\.d\d+)?\.csv$/i],
+  qualificacoes_socios: [
+    /qualscsv$/i,
+    /\.quals(\.d\d+)?\.csv$/i,
+    /\.qualificacoes[_-]?socios?(\.d\d+)?\.csv$/i,
+  ],
 };
 
 export const COLUMN_COUNT: Record<FileKind, number> = {
@@ -45,7 +73,7 @@ export const COLUMN_COUNT: Record<FileKind, number> = {
   dados_simples: 7,
   cnaes: 2,
   motivos: 2,
-  municipios: 3,
+  municipios: 2,
   naturezas_juridicas: 2,
   paises: 2,
   qualificacoes_socios: 2,

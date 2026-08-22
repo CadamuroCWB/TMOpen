@@ -13,15 +13,21 @@ prisma/dev.db*
 logs/
 fixtures/
 downloads/
+backups/
 *.zip
 *.ZIP
 *.CSV
 *.csv
 *.dump
+*.7z
+*.tar
+*.tar.gz
+*.tgz
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 coverage/
 data/
+.env.txt
 

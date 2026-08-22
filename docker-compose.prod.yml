@@ -51,8 +51,11 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: "postgresql://${POSTGRES_USER:-tmopen}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obrigatorio}@postgres:5432/${POSTGRES_DB:-tmopen}?schema=public"
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET obrigatorio}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      JWT_SECRET: ${JWT_SECRET:-changeme-se-nao-usar}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      TMOPEN_API_KEYS:fc7f760902066cbd019b3ea8927adf0899969f557a1e3f8c5ce2354428289acd ${TMOPEN_API_KEYS:?TMOPEN_API_KEYS obrigatorio - gere com 'openssl rand -hex 32'}
+      PROSPECT_RATE_LIMIT_MAX: ${PROSPECT_RATE_LIMIT_MAX:-60}
+      PROSPECT_MAX_PAGE_SIZE: ${PROSPECT_MAX_PAGE_SIZE:-500}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "127.0.0.1:3000:3000"

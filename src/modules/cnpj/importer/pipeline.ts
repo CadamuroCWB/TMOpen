@@ -94,7 +94,14 @@ export class ImportPipeline {
     this.statsMemoryTimer = setInterval(() => {
       const mb = Math.round(process.memoryUsage().rss / 1024 / 1024);
       if (mb > this.peakMemoryMB) this.peakMemoryMB = mb;
-    }, 1000);
+      if (typeof (globalThis as unknown as { gc?: () => void }).gc === 'function') {
+        try {
+          (globalThis as unknown as { gc: () => void }).gc();
+        } catch {
+          // ignore
+        }
+      }
+    }, 2500);
   }
 
   stopMemoryMonitor() {
@@ -200,14 +207,16 @@ export class ImportPipeline {
 
         if (this.options.tolerantFk) {
           const refs = extractMissingFkRefs(kind as TableName, [mapped.data]);
-          placeholderBuffer.push(...refs);
-          if (placeholderBuffer.length >= this.options.batchSize * 2) {
-            try {
-              await ensureDomainPlaceholders(placeholderBuffer, this.logger);
-            } catch (err) {
-              this.logger.error({ err, kind }, 'Falha ensureDomainPlaceholders');
+          if (refs.length > 0) {
+            placeholderBuffer.push(...refs);
+            if (placeholderBuffer.length >= this.options.batchSize) {
+              try {
+                await ensureDomainPlaceholders(placeholderBuffer, this.logger);
+              } catch (err) {
+                this.logger.error({ err, kind }, 'Falha ensureDomainPlaceholders');
+              }
+              placeholderBuffer.length = 0;
             }
-            placeholderBuffer.length = 0;
           }
         }
 
