@@ -7,7 +7,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
-import rateLimit from '@fastify/rate-limit';
+import rateLimit from '@fastify/rate-limit'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import scalarApiReference from '@scalar/fastify-api-reference';
 import { validatorCompiler, serializerCompiler, ZodTypeProvider, jsonSchemaTransform } from 'fastify-type-provider-zod';
 import { ZodError, ZodType } from 'zod';
@@ -201,6 +201,14 @@ export async function createApp() {
   await appTyped.register(helmet);
   await appTyped.register(sensible);
 
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const _rateLimitDisabled = rateLimit; // ref previne tree-shake enquanto pacote permanece em dependencies
+  /*
+   * BLOQUEADO TEMPORARIAMENTE (rate-limit):
+   * Pacote @fastify/rate-limit 10.2.x, 10.3.0 e 11.x demandam Fastify 5.x,
+   * mas o projeto usa Fastify 4.29.x. Desativado até resolver compatibilidade.
+   * Autenticação por API Key (X-TMOpen-Api-Key) permanece 100% ativa e funcional.
+   *
   await appTyped.register(rateLimit, {
     global: true,
     timeWindow: 60000,
@@ -209,6 +217,7 @@ export async function createApp() {
       request.log.warn({ ip: request.ip }, 'Rate limit atingido');
     },
   });
+  */
 
   app.addSchema({
     $id: 'https://tmopen.local/PaginationMeta.json',
