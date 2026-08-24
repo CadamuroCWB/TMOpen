@@ -2,6 +2,7 @@ import prisma from '../../../config/prisma.js';
 import { ProspectRepository } from '../repositories/prospect.repository.js';
 import type { ProspectListQuery } from '../schemas/prospect.schema.js';
 import { calcPaginationMeta, type Paginated } from '../../../common/pagination.js';
+import type { FastifyBaseLogger } from 'fastify';
 
 const SITUACAO_CADASTRAL_DESC: Record<number, string> = {
   1: 'NULA',
@@ -163,7 +164,7 @@ export class ProspectService {
     };
   }
 
-  async searchEstabelecimentos(query: ProspectListQuery): Promise<Paginated<any>> {
+  async searchEstabelecimentos(query: ProspectListQuery, logger?: FastifyBaseLogger): Promise<Paginated<any>> {
     const page = query.page;
     const limit = query.limit;
 
@@ -182,30 +183,48 @@ export class ProspectService {
       data_inicio_atividade_ate: query.data_inicio_atividade_ate,
     };
 
-    const { rows, count } = await this.repo.searchEstabelecimentos({ page, limit, filter });
+    const startedAt = performance.now();
+    try {
+      const { rows, count } = await this.repo.searchEstabelecimentos({ page, limit, filter });
+      const elapsedMs = Math.round(performance.now() - startedAt);
 
-    if (limit === 0 || rows.length === 0) {
-      return { data: [], meta: calcPaginationMeta(page, limit, count) };
+      if (limit === 0 || rows.length === 0) {
+        logger?.info(
+          { kind: 'estabelecimentos', page, limit, count, rows: rows.length, elapsedMs, filter },
+          limit === 0 ? 'prospect.count.estabelecimentos' : 'prospect.search.estabelecimentos.empty',
+        );
+        return { data: [], meta: calcPaginationMeta(page, limit, count) };
+      }
+
+      const municipioCodigos = new Set<string>();
+      const cnaeCodigos = new Set<string>();
+      const naturezaCodigos = new Set<string>();
+
+      for (const row of rows) {
+        if (row.municipio) municipioCodigos.add(row.municipio);
+        if (row.cnae_fiscal_principal) cnaeCodigos.add(row.cnae_fiscal_principal);
+        if (row.empresa?.natureza_juridica) naturezaCodigos.add(row.empresa.natureza_juridica);
+      }
+
+      const maps = await this.loadDomainMaps({ municipioCodigos, cnaeCodigos, naturezaCodigos });
+      const data = rows.map((r) => this.formatEstabelecimento(r, maps));
+
+      logger?.info(
+        { kind: 'estabelecimentos', page, limit, count, rows: rows.length, elapsedMs },
+        'prospect.search.estabelecimentos.ok',
+      );
+      return { data, meta: calcPaginationMeta(page, limit, count) };
+    } catch (err) {
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      logger?.error(
+        { kind: 'estabelecimentos', page, limit, elapsedMs, filter, err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err },
+        'prospect.search.estabelecimentos.error',
+      );
+      throw err;
     }
-
-    const municipioCodigos = new Set<string>();
-    const cnaeCodigos = new Set<string>();
-    const naturezaCodigos = new Set<string>();
-
-    for (const row of rows) {
-      if (row.municipio) municipioCodigos.add(row.municipio);
-      if (row.cnae_fiscal_principal) cnaeCodigos.add(row.cnae_fiscal_principal);
-      if (row.empresa?.natureza_juridica) naturezaCodigos.add(row.empresa.natureza_juridica);
-    }
-
-    const maps = await this.loadDomainMaps({ municipioCodigos, cnaeCodigos, naturezaCodigos });
-
-    const data = rows.map((r) => this.formatEstabelecimento(r, maps));
-
-    return { data, meta: calcPaginationMeta(page, limit, count) };
   }
 
-  async searchEmpresas(query: ProspectListQuery): Promise<Paginated<any>> {
+  async searchEmpresas(query: ProspectListQuery, logger?: FastifyBaseLogger): Promise<Paginated<any>> {
     const page = query.page;
     const limit = query.limit;
 
@@ -224,28 +243,46 @@ export class ProspectService {
       data_inicio_atividade_ate: query.data_inicio_atividade_ate,
     };
 
-    const { rows, count } = await this.repo.searchEmpresas({ page, limit, filter });
+    const startedAt = performance.now();
+    try {
+      const { rows, count } = await this.repo.searchEmpresas({ page, limit, filter });
+      const elapsedMs = Math.round(performance.now() - startedAt);
 
-    if (limit === 0 || rows.length === 0) {
-      return { data: [], meta: calcPaginationMeta(page, limit, count) };
+      if (limit === 0 || rows.length === 0) {
+        logger?.info(
+          { kind: 'empresas', page, limit, count, rows: rows.length, elapsedMs, filter },
+          limit === 0 ? 'prospect.count.empresas' : 'prospect.search.empresas.empty',
+        );
+        return { data: [], meta: calcPaginationMeta(page, limit, count) };
+      }
+
+      const municipioCodigos = new Set<string>();
+      const cnaeCodigos = new Set<string>();
+      const naturezaCodigos = new Set<string>();
+
+      for (const row of rows) {
+        const estab = row.estabelecimentos?.[0];
+        if (estab?.municipio) municipioCodigos.add(estab.municipio);
+        if (estab?.cnae_fiscal_principal) cnaeCodigos.add(estab.cnae_fiscal_principal);
+        if (row.natureza_juridica) naturezaCodigos.add(row.natureza_juridica);
+      }
+
+      const maps = await this.loadDomainMaps({ municipioCodigos, cnaeCodigos, naturezaCodigos });
+      const data = rows.map((r) => this.formatEmpresa(r, maps));
+
+      logger?.info(
+        { kind: 'empresas', page, limit, count, rows: rows.length, elapsedMs },
+        'prospect.search.empresas.ok',
+      );
+      return { data, meta: calcPaginationMeta(page, limit, count) };
+    } catch (err) {
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      logger?.error(
+        { kind: 'empresas', page, limit, elapsedMs, filter, err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err },
+        'prospect.search.empresas.error',
+      );
+      throw err;
     }
-
-    const municipioCodigos = new Set<string>();
-    const cnaeCodigos = new Set<string>();
-    const naturezaCodigos = new Set<string>();
-
-    for (const row of rows) {
-      const estab = row.estabelecimentos?.[0];
-      if (estab?.municipio) municipioCodigos.add(estab.municipio);
-      if (estab?.cnae_fiscal_principal) cnaeCodigos.add(estab.cnae_fiscal_principal);
-      if (row.natureza_juridica) naturezaCodigos.add(row.natureza_juridica);
-    }
-
-    const maps = await this.loadDomainMaps({ municipioCodigos, cnaeCodigos, naturezaCodigos });
-
-    const data = rows.map((r) => this.formatEmpresa(r, maps));
-
-    return { data, meta: calcPaginationMeta(page, limit, count) };
   }
 }
 

@@ -9,7 +9,7 @@ export async function getProspectEstabelecimentos(
   request: FastifyRequest<{ Querystring: ProspectListQuery }>,
   reply: FastifyReply,
 ) {
-  const result = await service.searchEstabelecimentos(request.query);
+  const result = await service.searchEstabelecimentos(request.query, request.log);
   return reply.status(200).send(successApiResponse(result.data, result.meta));
 }
 
@@ -17,7 +17,7 @@ export async function getProspectEmpresas(
   request: FastifyRequest<{ Querystring: ProspectListQuery }>,
   reply: FastifyReply,
 ) {
-  const result = await service.searchEmpresas(request.query);
+  const result = await service.searchEmpresas(request.query, request.log);
   return reply.status(200).send(successApiResponse(result.data, result.meta));
 }
 

@@ -33,14 +33,20 @@ export function successApiResponse<T>(
 export function errorApiResponse(
   error: string,
   details?: unknown,
-  code?: string,
-): { error: string; details?: unknown; code?: string } {
-  const response: { error: string; details?: unknown; code?: string } = { error };
+  code?: string | null,
+  extra?: Record<string, unknown>,
+): { error: string; details?: unknown; code?: string | null; [key: string]: unknown } {
+  const response: { error: string; details?: unknown; code?: string | null; [key: string]: unknown } = { error };
   if (details !== undefined) {
     response.details = details;
   }
   if (code !== undefined) {
     response.code = code;
+  }
+  if (extra !== undefined && extra !== null) {
+    for (const k of Object.keys(extra)) {
+      response[k] = extra[k];
+    }
   }
   return response;
 }

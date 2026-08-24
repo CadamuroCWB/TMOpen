@@ -151,10 +151,19 @@ export async function createApp() {
   });
 
   app.setErrorHandler<FastifyError>((error, request, reply) => {
+    const debugHeader = request.headers['x-tmopen-debug'];
+    const wantDebug = debugHeader === '1' || debugHeader === 'true' || env.NODE_ENV !== 'production';
+
     if (error instanceof AppError) {
+      const details = wantDebug ? (error.details ?? null) : error.details;
+      const extra: any = {};
+      if (wantDebug) {
+        extra._stack = error.stack;
+        extra._name = error.name;
+      }
       reply
         .status(error.statusCode)
-        .send(errorApiResponse(error.message, error.details, error.code));
+        .send(errorApiResponse(error.message, details, error.code, wantDebug ? extra : undefined));
       return;
     }
 
@@ -163,8 +172,12 @@ export async function createApp() {
         path: issue.path.join('.'),
         message: issue.message,
       }));
+      const extra: any = {};
+      if (wantDebug) {
+        extra._stack = error.stack;
+      }
       reply.status(400).send(
-        errorApiResponse('Dados inválidos', details, 'VALIDATION_ERROR'),
+        errorApiResponse('Dados inválidos', details, 'VALIDATION_ERROR', wantDebug ? extra : undefined),
       );
       return;
     }
@@ -174,21 +187,36 @@ export async function createApp() {
       (error as any).code === 'FST_ERR_VALIDATION'
     ) {
       const details = (error as any).validation ?? null;
+      const extra: any = {};
+      if (wantDebug) {
+        extra._stack = error.stack;
+      }
       reply.status(400).send(
-        errorApiResponse('Requisição inválida', details, 'VALIDATION_ERROR'),
+        errorApiResponse('Requisição inválida', details, 'VALIDATION_ERROR', wantDebug ? extra : undefined),
       );
       return;
     }
 
     if (isAppErrorLike(error)) {
+      const extra: any = {};
+      if (wantDebug) {
+        extra._stack = error.stack;
+        extra._name = (error as any).name;
+      }
       reply
         .status(error.statusCode)
-        .send(errorApiResponse(error.message, (error as any).details ?? null, (error as any).code));
+        .send(errorApiResponse(error.message, (error as any).details ?? null, (error as any).code, wantDebug ? extra : undefined));
       return;
     }
 
     request.log.error({ err: error }, 'Erro interno não tratado');
-    reply.status(500).send(errorApiResponse('Erro interno do servidor'));
+    const extra: any = {};
+    if (wantDebug) {
+      extra._stack = error.stack;
+      extra._name = (error as any).name ?? error.constructor?.name;
+      extra._rawMessage = error.message;
+    }
+    reply.status(500).send(errorApiResponse('Erro interno do servidor', null, 'INTERNAL_SERVER_ERROR', wantDebug ? extra : undefined));
   });
 
   const corsOrigins = env.CORS_ORIGINS;

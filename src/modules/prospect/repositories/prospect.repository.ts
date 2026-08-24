@@ -39,17 +39,17 @@ export class ProspectRepository {
       if (/^\d{7}$/.test(filter.municipio)) {
         where.municipio = filter.municipio;
       } else {
-        where.municipio = {
-          in: this.prisma.municipios.findMany({
-            where: {
-              descricao: {
-                contains: filter.municipio,
-                mode: 'insensitive',
-              },
+        const rows = await this.prisma.municipios.findMany({
+          where: {
+            descricao: {
+              contains: filter.municipio,
+              mode: 'insensitive',
             },
-            select: { codigo: true },
-          }) as any,
-        };
+          },
+          select: { codigo: true },
+        });
+        const codigos = rows.map((r) => r.codigo);
+        where.municipio = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
       }
     }
 
@@ -57,17 +57,17 @@ export class ProspectRepository {
       if (/^\d{7}$/.test(filter.cnae)) {
         where.cnae_fiscal_principal = filter.cnae;
       } else {
-        where.cnae_fiscal_principal = {
-          in: this.prisma.cnaes.findMany({
-            where: {
-              descricao: {
-                contains: filter.cnae,
-                mode: 'insensitive',
-              },
+        const rows = await this.prisma.cnaes.findMany({
+          where: {
+            descricao: {
+              contains: filter.cnae,
+              mode: 'insensitive',
             },
-            select: { codigo: true },
-          }) as any,
-        };
+          },
+          select: { codigo: true },
+        });
+        const codigos = rows.map((r) => r.codigo);
+        where.cnae_fiscal_principal = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
       }
     }
 
@@ -122,15 +122,12 @@ export class ProspectRepository {
     const hasEmpresaWhere = Object.keys(empresaWhere).length > 0;
     const hasDadosSimplesWhere = Object.keys(dadosSimplesWhere).length > 0;
 
-    if (hasEmpresaWhere) {
-      where.empresa = empresaWhere;
-    }
-
-    if (hasDadosSimplesWhere) {
-      where.empresa = {
-        ...(where.empresa as any),
-        dados_simples: dadosSimplesWhere,
-      };
+    if (hasEmpresaWhere || hasDadosSimplesWhere) {
+      const mergedEmpresa: any = { ...(empresaWhere as any) };
+      if (hasDadosSimplesWhere) {
+        mergedEmpresa.dados_simples = dadosSimplesWhere;
+      }
+      where.empresa = mergedEmpresa;
     }
 
     const include: Prisma.estabelecimentosInclude = {
@@ -218,17 +215,17 @@ export class ProspectRepository {
       if (/^\d{7}$/.test(filter.municipio)) {
         estabWhere.municipio = filter.municipio;
       } else {
-        estabWhere.municipio = {
-          in: this.prisma.municipios.findMany({
-            where: {
-              descricao: {
-                contains: filter.municipio,
-                mode: 'insensitive',
-              },
+        const rows = await this.prisma.municipios.findMany({
+          where: {
+            descricao: {
+              contains: filter.municipio,
+              mode: 'insensitive',
             },
-            select: { codigo: true },
-          }) as any,
-        };
+          },
+          select: { codigo: true },
+        });
+        const codigos = rows.map((r) => r.codigo);
+        estabWhere.municipio = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
       }
     }
 
@@ -236,17 +233,17 @@ export class ProspectRepository {
       if (/^\d{7}$/.test(filter.cnae)) {
         estabWhere.cnae_fiscal_principal = filter.cnae;
       } else {
-        estabWhere.cnae_fiscal_principal = {
-          in: this.prisma.cnaes.findMany({
-            where: {
-              descricao: {
-                contains: filter.cnae,
-                mode: 'insensitive',
-              },
+        const rows = await this.prisma.cnaes.findMany({
+          where: {
+            descricao: {
+              contains: filter.cnae,
+              mode: 'insensitive',
             },
-            select: { codigo: true },
-          }) as any,
-        };
+          },
+          select: { codigo: true },
+        });
+        const codigos = rows.map((r) => r.codigo);
+        estabWhere.cnae_fiscal_principal = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
       }
     }
 
