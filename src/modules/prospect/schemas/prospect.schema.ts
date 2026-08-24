@@ -4,10 +4,19 @@ import { env } from '../../../config/env.js';
 
 export const ProspectSearchModeSchema = z.enum(['estabelecimento', 'empresa']).default('estabelecimento');
 
+const MunicipioCodigosSchema = z.union([
+  z.string().transform((raw): string[] => {
+    if (!raw) return [];
+    return raw.split(',').map((p) => p.trim()).filter((p) => p.length > 0);
+  }),
+  z.array(z.string()).transform((raw): string[] => raw.map((p) => p.trim()).filter((p) => p.length > 0)),
+]).optional();
+
 const ProspectListQueryBaseSchema = PaginationQuerySchema.extend({
   mode: ProspectSearchModeSchema,
   uf: z.string().length(2).optional(),
   municipio: z.string().optional(),
+  municipio_codigos: MunicipioCodigosSchema,
   cnae: z.string().optional(),
   situacao_cadastral: z.coerce.number().int().optional(),
   porte: z.string().length(2).optional(),

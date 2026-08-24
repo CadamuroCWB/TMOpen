@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 type ProspectFilter = {
   uf?: string;
   municipio?: string;
+  municipio_codigos?: string[];
   cnae?: string;
   situacao_cadastral?: number;
   porte?: string;
@@ -102,7 +103,16 @@ export class ProspectRepository {
       where.uf = filter.uf;
     }
 
-    if (filter.municipio) {
+    if (filter.municipio_codigos && filter.municipio_codigos.length > 0) {
+      const normalized = filter.municipio_codigos
+        .map((c) => onlyDigits(c))
+        .filter((c) => c.length === 7);
+      if (normalized.length > 0) {
+        where.municipio = { in: normalized } as any;
+      } else {
+        where.municipio = { in: ['__EMPTY__'] } as any;
+      }
+    } else if (filter.municipio) {
       const resolved = await resolveMunicipioCodigos(this.prisma, filter.municipio);
       if (resolved !== null) {
         where.municipio = resolved as any;

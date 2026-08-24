@@ -171,6 +171,7 @@ export class ProspectService {
     const filter = {
       uf: query.uf,
       municipio: query.municipio,
+      municipio_codigos: Array.isArray(query.municipio_codigos) ? query.municipio_codigos : undefined,
       cnae: query.cnae,
       situacao_cadastral: query.situacao_cadastral,
       porte: query.porte,
@@ -231,6 +232,7 @@ export class ProspectService {
     const filter = {
       uf: query.uf,
       municipio: query.municipio,
+      municipio_codigos: Array.isArray(query.municipio_codigos) ? query.municipio_codigos : undefined,
       cnae: query.cnae,
       situacao_cadastral: query.situacao_cadastral,
       porte: query.porte,
