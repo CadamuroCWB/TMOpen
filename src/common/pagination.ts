@@ -41,7 +41,7 @@ export function parsePaginationParams(
     page = defaults.page;
   }
 
-  if (!Number.isFinite(limit) || limit < 1) {
+  if (!Number.isFinite(limit) || limit < 0) {
     limit = defaults.limit;
   }
 

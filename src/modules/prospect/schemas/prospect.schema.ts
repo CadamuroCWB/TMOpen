@@ -25,6 +25,9 @@ export const ProspectListQuerySchema = ProspectListQueryBaseSchema.transform((pa
   if (limit > env.PROSPECT_MAX_PAGE_SIZE) {
     limit = env.PROSPECT_MAX_PAGE_SIZE;
   }
+  if (limit < 0) {
+    limit = 0;
+  }
   return { ...parsed, limit };
 });
 
@@ -32,6 +35,9 @@ export const ProspectListQueryWithoutModeSchema = ProspectListQueryBaseSchema.om
   let limit = parsed.limit ?? 20;
   if (limit > env.PROSPECT_MAX_PAGE_SIZE) {
     limit = env.PROSPECT_MAX_PAGE_SIZE;
+  }
+  if (limit < 0) {
+    limit = 0;
   }
   return { ...parsed, limit };
 });

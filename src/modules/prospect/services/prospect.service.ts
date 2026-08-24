@@ -184,6 +184,10 @@ export class ProspectService {
 
     const { rows, count } = await this.repo.searchEstabelecimentos({ page, limit, filter });
 
+    if (limit === 0 || rows.length === 0) {
+      return { data: [], meta: calcPaginationMeta(page, limit, count) };
+    }
+
     const municipioCodigos = new Set<string>();
     const cnaeCodigos = new Set<string>();
     const naturezaCodigos = new Set<string>();
@@ -221,6 +225,10 @@ export class ProspectService {
     };
 
     const { rows, count } = await this.repo.searchEmpresas({ page, limit, filter });
+
+    if (limit === 0 || rows.length === 0) {
+      return { data: [], meta: calcPaginationMeta(page, limit, count) };
+    }
 
     const municipioCodigos = new Set<string>();
     const cnaeCodigos = new Set<string>();

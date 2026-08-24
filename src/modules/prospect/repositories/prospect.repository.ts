@@ -26,8 +26,8 @@ export class ProspectRepository {
   private prisma = prisma;
 
   async searchEstabelecimentos({ page, limit, filter }: SearchParams) {
-    const skip = (page - 1) * limit;
-    const take = limit;
+    const skip = limit > 0 ? (page - 1) * limit : 0;
+    const take = limit > 0 ? limit : 0;
 
     const where: Prisma.estabelecimentosWhereInput = {};
 
@@ -184,27 +184,29 @@ export class ProspectRepository {
       },
     };
 
-    const [rows, count] = await Promise.all([
-      this.prisma.estabelecimentos.findMany({
-        skip,
-        take,
-        where,
-        select,
-        orderBy: [
-          { cnpj_basico: 'asc' },
-          { cnpj_ordem: 'asc' },
-          { cnpj_dv: 'asc' },
-        ],
-      }),
-      this.prisma.estabelecimentos.count({ where }),
-    ]);
+    const countPromise = this.prisma.estabelecimentos.count({ where });
+    const rowsPromise = take > 0
+      ? this.prisma.estabelecimentos.findMany({
+          skip,
+          take,
+          where,
+          select,
+          orderBy: [
+            { cnpj_basico: 'asc' },
+            { cnpj_ordem: 'asc' },
+            { cnpj_dv: 'asc' },
+          ],
+        })
+      : Promise.resolve([] as any[]);
+
+    const [rows, count] = await Promise.all([rowsPromise, countPromise]);
 
     return { rows, count };
   }
 
   async searchEmpresas({ page, limit, filter }: SearchParams) {
-    const skip = (page - 1) * limit;
-    const take = limit;
+    const skip = limit > 0 ? (page - 1) * limit : 0;
+    const take = limit > 0 ? limit : 0;
 
     const estabWhere: Prisma.estabelecimentosWhereInput = {};
 
@@ -337,16 +339,18 @@ export class ProspectRepository {
       },
     };
 
-    const [rows, count] = await Promise.all([
-      this.prisma.empresas.findMany({
-        skip,
-        take,
-        where,
-        select,
-        orderBy: { cnpj_basico: 'asc' },
-      }),
-      this.prisma.empresas.count({ where }),
-    ]);
+    const countPromise = this.prisma.empresas.count({ where });
+    const rowsPromise = take > 0
+      ? this.prisma.empresas.findMany({
+          skip,
+          take,
+          where,
+          select,
+          orderBy: { cnpj_basico: 'asc' },
+        })
+      : Promise.resolve([] as any[]);
+
+    const [rows, count] = await Promise.all([rowsPromise, countPromise]);
 
     return { rows, count };
   }
