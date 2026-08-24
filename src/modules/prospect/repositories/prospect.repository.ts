@@ -22,6 +22,73 @@ type SearchParams = {
   filter: ProspectFilter;
 };
 
+function onlyDigits(input: string | null | undefined): string {
+  if (!input) return '';
+  return input.replace(/\D+/g, '');
+}
+
+async function resolveMunicipioCodigos(
+  prismaInst: typeof prisma,
+  raw: string | null | undefined,
+): Promise<{ in?: string[] } | string | null> {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const digits = onlyDigits(trimmed);
+  if (digits.length === 7) return digits;
+
+  const rows = await prismaInst.municipios.findMany({
+    where: {
+      descricao: {
+        contains: trimmed,
+        mode: 'insensitive',
+      },
+    },
+    select: { codigo: true },
+    take: 500,
+  });
+  const codigos = rows.map((r) => r.codigo);
+  if (codigos.length === 0) return { in: ['__EMPTY__'] };
+  return { in: codigos };
+}
+
+async function resolveCnaeCodigos(
+  prismaInst: typeof prisma,
+  raw: string | null | undefined,
+): Promise<{ in?: string[] } | string | null> {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const digits = onlyDigits(trimmed);
+  if (digits.length === 7) return digits;
+  if (digits.length > 0 && digits.length <= 7) {
+    const rows = await prismaInst.cnaes.findMany({
+      where: { codigo: { startsWith: digits } },
+      select: { codigo: true },
+      take: 1000,
+    });
+    const codigos = rows.map((r) => r.codigo);
+    if (codigos.length === 0) return { in: ['__EMPTY__'] };
+    return { in: codigos };
+  }
+
+  const rows = await prismaInst.cnaes.findMany({
+    where: {
+      descricao: {
+        contains: trimmed,
+        mode: 'insensitive',
+      },
+    },
+    select: { codigo: true },
+    take: 500,
+  });
+  const codigos = rows.map((r) => r.codigo);
+  if (codigos.length === 0) return { in: ['__EMPTY__'] };
+  return { in: codigos };
+}
+
 export class ProspectRepository {
   private prisma = prisma;
 
@@ -36,38 +103,16 @@ export class ProspectRepository {
     }
 
     if (filter.municipio) {
-      if (/^\d{7}$/.test(filter.municipio)) {
-        where.municipio = filter.municipio;
-      } else {
-        const rows = await this.prisma.municipios.findMany({
-          where: {
-            descricao: {
-              contains: filter.municipio,
-              mode: 'insensitive',
-            },
-          },
-          select: { codigo: true },
-        });
-        const codigos = rows.map((r) => r.codigo);
-        where.municipio = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
+      const resolved = await resolveMunicipioCodigos(this.prisma, filter.municipio);
+      if (resolved !== null) {
+        where.municipio = resolved as any;
       }
     }
 
     if (filter.cnae) {
-      if (/^\d{7}$/.test(filter.cnae)) {
-        where.cnae_fiscal_principal = filter.cnae;
-      } else {
-        const rows = await this.prisma.cnaes.findMany({
-          where: {
-            descricao: {
-              contains: filter.cnae,
-              mode: 'insensitive',
-            },
-          },
-          select: { codigo: true },
-        });
-        const codigos = rows.map((r) => r.codigo);
-        where.cnae_fiscal_principal = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
+      const resolved = await resolveCnaeCodigos(this.prisma, filter.cnae);
+      if (resolved !== null) {
+        where.cnae_fiscal_principal = resolved as any;
       }
     }
 
@@ -212,38 +257,16 @@ export class ProspectRepository {
     }
 
     if (filter.municipio) {
-      if (/^\d{7}$/.test(filter.municipio)) {
-        estabWhere.municipio = filter.municipio;
-      } else {
-        const rows = await this.prisma.municipios.findMany({
-          where: {
-            descricao: {
-              contains: filter.municipio,
-              mode: 'insensitive',
-            },
-          },
-          select: { codigo: true },
-        });
-        const codigos = rows.map((r) => r.codigo);
-        estabWhere.municipio = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
+      const resolved = await resolveMunicipioCodigos(this.prisma, filter.municipio);
+      if (resolved !== null) {
+        estabWhere.municipio = resolved as any;
       }
     }
 
     if (filter.cnae) {
-      if (/^\d{7}$/.test(filter.cnae)) {
-        estabWhere.cnae_fiscal_principal = filter.cnae;
-      } else {
-        const rows = await this.prisma.cnaes.findMany({
-          where: {
-            descricao: {
-              contains: filter.cnae,
-              mode: 'insensitive',
-            },
-          },
-          select: { codigo: true },
-        });
-        const codigos = rows.map((r) => r.codigo);
-        estabWhere.cnae_fiscal_principal = codigos.length > 0 ? { in: codigos } : { in: ['__EMPTY__'] };
+      const resolved = await resolveCnaeCodigos(this.prisma, filter.cnae);
+      if (resolved !== null) {
+        estabWhere.cnae_fiscal_principal = resolved as any;
       }
     }
 
