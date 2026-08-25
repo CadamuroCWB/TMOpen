@@ -266,7 +266,16 @@ export class ProspectRepository {
       estabWhere.uf = filter.uf;
     }
 
-    if (filter.municipio) {
+    if (filter.municipio_codigos && filter.municipio_codigos.length > 0) {
+      const normalized = filter.municipio_codigos
+        .map((c) => onlyDigits(c))
+        .filter((c) => c.length === 7);
+      if (normalized.length > 0) {
+        estabWhere.municipio = { in: normalized } as any;
+      } else {
+        estabWhere.municipio = { in: ['__EMPTY__'] } as any;
+      }
+    } else if (filter.municipio) {
       const resolved = await resolveMunicipioCodigos(this.prisma, filter.municipio);
       if (resolved !== null) {
         estabWhere.municipio = resolved as any;
@@ -331,7 +340,7 @@ export class ProspectRepository {
       if (filter.opcao_pelo_mei) {
         dadosSimplesWhere.opcao_pelo_mei = filter.opcao_pelo_mei;
       }
-      where.dados_simples = dadosSimplesWhere;
+      where.dados_simples = dadosSimplesWhere as any;
     }
 
     const select: Prisma.empresasSelect = {
