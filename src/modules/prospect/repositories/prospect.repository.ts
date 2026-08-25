@@ -232,6 +232,34 @@ export class ProspectRepository {
               opcao_pelo_mei: true,
             },
           },
+          socios: {
+            take: 50,
+            orderBy: [
+              { data_entrada_sociedade: 'asc' },
+              { nome_socio: 'asc' },
+            ],
+            select: {
+              identificador_de_socio: true,
+              nome_socio: true,
+              cnpj_cpf_do_socio: true,
+              qualificacao_do_socio: true,
+              data_entrada_sociedade: true,
+              pais: true,
+              representante_legal: true,
+              nome_do_representante: true,
+              qualificacao_representante_legal: true,
+              faixa_etaria: true,
+              qualificacao_socio_rel: {
+                select: { descricao: true },
+              },
+              pais_rel: {
+                select: { descricao: true },
+              },
+              qualificacao_representante_rel: {
+                select: { descricao: true },
+              },
+            },
+          },
         },
       },
     };
@@ -353,6 +381,34 @@ export class ProspectRepository {
         select: {
           opcao_pelo_simples: true,
           opcao_pelo_mei: true,
+        },
+      },
+      socios: {
+        take: 50,
+        orderBy: [
+          { data_entrada_sociedade: 'asc' },
+          { nome_socio: 'asc' },
+        ],
+        select: {
+          identificador_de_socio: true,
+          nome_socio: true,
+          cnpj_cpf_do_socio: true,
+          qualificacao_do_socio: true,
+          data_entrada_sociedade: true,
+          pais: true,
+          representante_legal: true,
+          nome_do_representante: true,
+          qualificacao_representante_legal: true,
+          faixa_etaria: true,
+          qualificacao_socio_rel: {
+            select: { descricao: true },
+          },
+          pais_rel: {
+            select: { descricao: true },
+          },
+          qualificacao_representante_rel: {
+            select: { descricao: true },
+          },
         },
       },
       estabelecimentos: {

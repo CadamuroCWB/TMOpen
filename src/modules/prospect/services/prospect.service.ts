@@ -82,6 +82,7 @@ export class ProspectService {
     const telefone = this.formatTelefone(row.ddd1, row.telefone1);
     const simples = row.empresa?.dados_simples?.opcao_pelo_simples ?? null;
     const mei = row.empresa?.dados_simples?.opcao_pelo_mei ?? null;
+    const socios = row.empresa?.socios?.map((s: any) => this.formatSocio(s)) ?? null;
 
     return {
       cnpj_basico: row.cnpj_basico,
@@ -116,6 +117,7 @@ export class ProspectService {
       simples_nacional: simples,
       simples: simples,
       mei,
+      socios,
     };
   }
 
@@ -129,6 +131,7 @@ export class ProspectService {
     const telefone = this.formatTelefone(estab?.ddd1, estab?.telefone1);
     const simples = row.dados_simples?.opcao_pelo_simples ?? null;
     const mei = row.dados_simples?.opcao_pelo_mei ?? null;
+    const socios = row.socios?.map((s: any) => this.formatSocio(s)) ?? null;
 
     return {
       cnpj_basico: row.cnpj_basico,
@@ -161,6 +164,39 @@ export class ProspectService {
       ddd1: estab?.ddd1 ?? null,
       telefone1: estab?.telefone1 ?? null,
       telefone,
+      socios,
+    };
+  }
+
+  private formatSocio(s: any) {
+    if (!s) return null;
+    const qualCod = s.qualificacao_do_socio ?? null;
+    const qualDesc = s.qualificacao_socio_rel?.descricao ?? null;
+    const paisCod = s.pais ?? null;
+    const paisDesc = s.pais_rel?.descricao ?? null;
+    const repQualCod = s.qualificacao_representante_legal ?? null;
+    const repQualDesc = s.qualificacao_representante_rel?.descricao ?? null;
+
+    const dataStr = s.data_entrada_sociedade instanceof Date
+      ? s.data_entrada_sociedade.toISOString().slice(0, 10)
+      : s.data_entrada_sociedade
+        ? typeof s.data_entrada_sociedade === 'string' ? s.data_entrada_sociedade.slice(0, 10) : null
+        : null;
+
+    return {
+      identificador_de_socio: s.identificador_de_socio ?? null,
+      nome: s.nome_socio ?? null,
+      cnpj_cpf: s.cnpj_cpf_do_socio ?? null,
+      qualificacao_codigo: qualCod,
+      qualificacao_descricao: qualDesc,
+      data_entrada: dataStr,
+      pais_codigo: paisCod,
+      pais_descricao: paisDesc,
+      representante_cpf: s.representante_legal ?? null,
+      representante_nome: s.nome_do_representante ?? null,
+      representante_qualificacao_codigo: repQualCod,
+      representante_qualificacao_descricao: repQualDesc,
+      faixa_etaria: s.faixa_etaria ?? null,
     };
   }
 
