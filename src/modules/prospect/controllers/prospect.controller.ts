@@ -21,7 +21,16 @@ export async function getProspectEmpresas(
   return reply.status(200).send(successApiResponse(result.data, result.meta));
 }
 
+export async function getProspectSocios(
+  request: FastifyRequest<{ Params: { cnpj_basico: string } }>,
+  reply: FastifyReply,
+) {
+  const data = await service.getSociosPorCnpjBasico(request.params.cnpj_basico, request.log);
+  return reply.status(200).send(successApiResponse(data));
+}
+
 export default {
   getProspectEstabelecimentos,
   getProspectEmpresas,
+  getProspectSocios,
 };

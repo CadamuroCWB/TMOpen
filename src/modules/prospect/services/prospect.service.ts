@@ -82,7 +82,6 @@ export class ProspectService {
     const telefone = this.formatTelefone(row.ddd1, row.telefone1);
     const simples = row.empresa?.dados_simples?.opcao_pelo_simples ?? null;
     const mei = row.empresa?.dados_simples?.opcao_pelo_mei ?? null;
-    const socios = row.empresa?.socios?.map((s: any) => this.formatSocio(s)) ?? null;
 
     return {
       cnpj_basico: row.cnpj_basico,
@@ -117,7 +116,6 @@ export class ProspectService {
       simples_nacional: simples,
       simples: simples,
       mei,
-      socios,
     };
   }
 
@@ -131,7 +129,6 @@ export class ProspectService {
     const telefone = this.formatTelefone(estab?.ddd1, estab?.telefone1);
     const simples = row.dados_simples?.opcao_pelo_simples ?? null;
     const mei = row.dados_simples?.opcao_pelo_mei ?? null;
-    const socios = row.socios?.map((s: any) => this.formatSocio(s)) ?? null;
 
     return {
       cnpj_basico: row.cnpj_basico,
@@ -164,7 +161,6 @@ export class ProspectService {
       ddd1: estab?.ddd1 ?? null,
       telefone1: estab?.telefone1 ?? null,
       telefone,
-      socios,
     };
   }
 
@@ -318,6 +314,27 @@ export class ProspectService {
       logger?.error(
         { kind: 'empresas', page, limit, elapsedMs, filter, err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err },
         'prospect.search.empresas.error',
+      );
+      throw err;
+    }
+  }
+
+  async getSociosPorCnpjBasico(cnpjBasico: string, logger?: FastifyBaseLogger): Promise<any[]> {
+    const startedAt = performance.now();
+    try {
+      const rows = await this.repo.getSociosPorCnpjBasico(cnpjBasico);
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      const data = rows.map((r) => this.formatSocio(r)).filter((x) => x !== null);
+      logger?.info(
+        { cnpjBasico, count: data.length, elapsedMs },
+        'prospect.socios.ok',
+      );
+      return data;
+    } catch (err) {
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      logger?.error(
+        { cnpjBasico, elapsedMs, err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err },
+        'prospect.socios.error',
       );
       throw err;
     }
